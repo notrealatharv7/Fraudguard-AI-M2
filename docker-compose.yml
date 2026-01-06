@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  fraud_api:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ml:/app/ml
+    networks:
+      - fraudguard-net
+
+  explanation_service:
+    build: ./backend/explanation_service
+    ports:
+      - "8080:80" # Expose on 8080 to avoid conflict with fraud_api
+    networks:
+      - fraudguard-net
+
+networks:
+  fraudguard-net:
+    driver: bridge

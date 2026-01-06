@@ -9,7 +9,8 @@ from pydantic import BaseModel, Field
 import joblib
 import os
 import numpy as np
-from typing import List
+import requests
+from typing import Optional
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -63,6 +64,7 @@ class FraudPrediction(BaseModel):
     """Output model for fraud prediction results."""
     fraud: bool = Field(..., description="True if fraud detected, False if legitimate")
     risk_score: float = Field(..., ge=0, le=1, description="Risk score between 0 and 1")
+    explanation: Optional[str] = Field(None, description="AI-generated explanation for the prediction")
 
 def load_model():
     """
@@ -146,9 +148,13 @@ async def predict_fraud(transaction: TransactionInput):
         # Convert to boolean and return
         is_fraud = bool(prediction == 1)
         
+        # Get AI explanation
+        explanation = get_ai_explanation(transaction, is_fraud, fraud_probability)
+
         return FraudPrediction(
             fraud=is_fraud,
-            risk_score=round(float(fraud_probability), 4)
+            risk_score=round(float(fraud_probability), 4),
+            explanation=explanation
         )
         
     except Exception as e:
@@ -156,6 +162,30 @@ async def predict_fraud(transaction: TransactionInput):
             status_code=500,
             detail=f"Prediction error: {str(e)}"
         )
+
+def get_ai_explanation(transaction: TransactionInput, is_fraud: bool, risk_score: float) -> Optional[str]:
+    """Calls the explanation service to get an AI-generated explanation."""
+    # The URL for the explanation service, running locally
+    url = "http://localhost:8081/explain"
+    
+    payload = {
+        "transactionAmount": transaction.transactionAmount,
+        "transactionAmountDeviation": transaction.transactionAmountDeviation,
+        "timeAnomaly": transaction.timeAnomaly,
+        "locationDistance": transaction.locationDistance,
+        "merchantNovelty": transaction.merchantNovelty,
+        "transactionFrequency": transaction.transactionFrequency,
+        "isFraud": is_fraud,
+        "riskScore": risk_score
+    }
+    
+    try:
+        response = requests.post(url, json=payload, timeout=10) # 10-second timeout
+        response.raise_for_status() # Raise an exception for bad status codes (4xx or 5xx)
+        return response.json().get("explanation")
+    except requests.exceptions.RequestException as e:
+        print(f"[ERROR] Could not connect to explanation service: {e}")
+        return "AI explanation service is currently unavailable."
 
 if __name__ == "__main__":
     import uvicorn

@@ -3,10 +3,12 @@
 class FraudPrediction {
   final bool fraud;
   final double riskScore;
+  final String? explanation;
 
   FraudPrediction({
     required this.fraud,
     required this.riskScore,
+    this.explanation,
   });
 
   /// Create from JSON API response
@@ -14,6 +16,7 @@ class FraudPrediction {
     return FraudPrediction(
       fraud: json['fraud'] as bool,
       riskScore: (json['risk_score'] as num).toDouble(),
+      explanation: json['explanation'] as String?,
     );
   }
 }

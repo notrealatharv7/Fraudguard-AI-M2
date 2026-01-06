@@ -14,10 +14,10 @@ class ApiService {
   // For Physical Device: use 'http://YOUR_COMPUTER_IP:8000'
   //   (Find your IP with: ipconfig on Windows, ifconfig on Mac/Linux)
   
-  static const String baseUrl = 'http://10.0.2.2:8000';  // Default: Android emulator
+  static const String baseUrl = 'http://localhost:8000';  // Web development
   
   // Uncomment one of these based on your setup:
-  // static const String baseUrl = 'http://localhost:8000';      // iOS Simulator
+  // static const String baseUrl = 'http://10.0.2.2:8000';      // Android emulator
   // static const String baseUrl = 'http://192.168.1.100:8000';   // Physical device (replace with your IP)
 
   /// Predicts if a transaction is fraudulent
